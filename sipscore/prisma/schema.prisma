@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client"
+  output   = "./generated/prisma"
+  schema = "public"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String?
+  password     String
+  image        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  drinkRatings DrinkRating[]
+  shopRatings  ShopRating[]
+
+  @@map("users")
+}
+
+model Shop {
+  id          String       @id @default(cuid())
+  name        String
+  address     String
+  city        String
+  state       String
+  zipCode     String?
+  latitude    Float
+  longitude   Float
+  phone       String?
+  website     String?
+  hours       Json?
+  description String?
+  imageUrl    String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  drinks      Drink[]
+  ratings     ShopRating[]
+
+  @@index([latitude, longitude])
+  @@map("shops")
+}
+
+model Drink {
+  id          String         @id @default(cuid())
+  shopId      String
+  name        String
+  description String?
+  price       Float?
+  category    String?
+  imageUrl    String?
+  createdAt   DateTime       @default(now())
+  ratings     DrinkRating[]
+  toppings    DrinkTopping[]
+  shop        Shop           @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+  @@map("drinks")
+}
+
+model Topping {
+  id          String         @id @default(cuid())
+  name        String         @unique
+  description String?
+  drinks      DrinkTopping[]
+
+  @@map("toppings")
+}
+
+model DrinkTopping {
+  drinkId   String
+  toppingId String
+  drink     Drink   @relation(fields: [drinkId], references: [id], onDelete: Cascade)
+  topping   Topping @relation(fields: [toppingId], references: [id], onDelete: Cascade)
+
+  @@id([drinkId, toppingId])
+  @@map("drink_toppings")
+}
+
+model ShopRating {
+  id             String   @id @default(cuid())
+  userId         String
+  shopId         String
+  rating         Int
+  review         String?
+  serviceRating  Int?
+  ambianceRating Int?
+  valueRating    Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  shop           Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, shopId])
+  @@index([shopId])
+  @@map("shop_ratings")
+}
+
+model DrinkRating {
+  id             String   @id @default(cuid())
+  userId         String
+  drinkId        String
+  rating         Int
+  review         String?
+  sweetnessLevel Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  drink          Drink    @relation(fields: [drinkId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, drinkId])
+  @@index([drinkId])
+  @@map("drink_ratings")
+}
